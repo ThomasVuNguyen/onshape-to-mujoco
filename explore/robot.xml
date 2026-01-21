@@ -1,0 +1,54 @@
+<mujoco model="onshape_robot">
+  <compiler angle="radian" meshdir="output/meshes_processed" autolimits="true"/>
+  <option gravity="0 0 0" timestep="0.002"/>
+  
+  <visual>
+    <global offwidth="1280" offheight="720"/>
+  </visual>
+  
+  <asset>
+    <texture name="grid" type="2d" builtin="checker" rgb1="0.1 0.2 0.3" rgb2="0.2 0.3 0.4" width="512" height="512"/>
+    <material name="grid_mat" texture="grid" texrepeat="5 5" reflectance="0.2"/>
+    <material name="pla_orange" rgba="1.0 0.6 0.1 1"/>
+    <material name="pla_gray" rgba="0.4 0.4 0.4 1"/>
+    <material name="pla_silver" rgba="0.75 0.75 0.75 1"/>
+    
+    <!-- Meshes preprocessed: all vertices shifted so motor shaft is at origin (0,0,0) -->
+    <mesh name="Motor" file="mg996r_motor__2__JFD.stl"/>
+    <mesh name="Horn" file="Horn__2__JFD.stl"/>
+    <mesh name="Joint_1" file="Joint__1__2__JoD.stl"/>
+    <mesh name="Joint_2" file="Joint__2__2__JID.stl"/>
+  </asset>
+  
+  <worldbody>
+    <geom name="ground" type="plane" size="1 1 0.1" pos="0 0 0" material="grid_mat"/>
+    <light name="light" pos="0.3 0.3 0.5" dir="-0.3 -0.3 -0.5"/>
+    <light name="light2" pos="-0.3 0.3 0.3" dir="0.3 -0.3 -0.5" diffuse="0.4 0.4 0.4"/>
+    
+    <!-- All parts now positioned relative to motor shaft at world (0, 0, 0.1) -->
+    <!-- Lift off ground by 0.1m for visibility -->
+    <body name="base" pos="0 0 0.1">
+      <inertial pos="0 0 0" mass="0.07" diaginertia="0.0001 0.0001 0.0001"/>
+      
+      <!-- Static parts: Motor + Joint_2 -->
+      <geom name="motor_geom" type="mesh" mesh="Motor" material="pla_gray"/>
+      <geom name="joint_2_geom" type="mesh" mesh="Joint_2" material="pla_orange"/>
+      
+      <!-- Rotating parts: Horn + Joint_1 -->
+      <!-- Body at origin (which is motor shaft), rotation happens around this point -->
+      <body name="horn_assy" pos="0 0 0">
+        <inertial pos="0 0 0" mass="0.012" diaginertia="0.00001 0.00001 0.00001"/>
+        
+        <!-- Hinge joint rotating around Y axis (motor shaft axis) -->
+        <joint name="servo_rotation" type="hinge" axis="0 1 0" limited="true" range="-1.5708 1.5708" damping="0.01"/>
+        
+        <geom name="horn_geom" type="mesh" mesh="Horn" material="pla_silver"/>
+        <geom name="joint_1_geom" type="mesh" mesh="Joint_1" material="pla_orange"/>
+      </body>
+    </body>
+  </worldbody>
+  
+  <actuator>
+    <motor name="servo" joint="servo_rotation" gear="50" ctrllimited="true" ctrlrange="-1 1"/>
+  </actuator>
+</mujoco>
